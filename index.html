@@ -3,244 +3,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOYGANG67 // DISCORD OS</title>
+    <title>GOYGANG67 // THE ULTIMATE OS</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg: #313338; --side: #2b2d31; --input: #383a40; --text: #dbdee1;
-            --primary: #5865f2; --danger: #ed4245; --67-red: 0;
+            --primary: #5865f2; --danger: #ed4245; --red-level: 0;
         }
+
+        /* Thèmes Globaux */
+        .theme-shrek { --bg: #5d4037; --side: #8bc34a; --input: #3e2723; }
+        .theme-hacker { --bg: #0a0a0a; --side: #000000; --input: #111; --text: #00ff41; --primary: #00ff41; }
 
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100vh; 
-            font-family: 'gg sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: var(--bg); color: var(--text); overflow: hidden;
-            background-image: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg); color: var(--text); overflow: hidden;
+            background-size: cover; background-position: center; transition: background 0.5s;
         }
 
-        /* EFFET ROUGE 67 */
-        #explosion-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 0, 0, var(--67-red));
-            pointer-events: none; z-index: 999; transition: 0.1s;
-        }
-
-        .app-container { display: flex; height: 100vh; width: 100vw; }
-
-        /* SIDEBAR STYLE DISCORD */
-        .sidebar { 
-            width: 260px; background: var(--side); display: flex; flex-direction: column;
-            border-right: 1px solid rgba(0,0,0,0.2); padding: 15px; gap: 10px;
-        }
-        .sidebar h2 { font-size: 1.2em; color: white; margin-bottom: 20px; border-bottom: 1px solid #3f4147; padding-bottom: 10px; }
-
-        /* CHAT AREA */
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg); position: relative; }
-        #chat-header { height: 50px; border-bottom: 1px solid rgba(0,0,0,0.2); display: flex; align-items: center; padding: 0 20px; font-weight: bold; background: var(--bg); }
-
-        #messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 2px; }
+        /* Animations */
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes flip { 0% { transform: perspective(1000px) rotateX(0deg); } 100% { transform: perspective(1000px) rotateX(360deg); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-1deg); } 75% { transform: translateX(5px) rotate(1deg); } }
         
-        /* MESSAGE LUXE */
-        .msg { 
-            display: flex; gap: 15px; padding: 5px 10px; transition: background 0.1s;
-            animation: slideIn 0.2s ease-out;
+        .backflip { animation: flip 1s ease-in-out; }
+        .shaking { animation: shake 0.1s infinite; }
+
+        /* Overlays */
+        #red-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: var(--red-level); pointer-events: none; z-index: 8000; transition: opacity 0.1s; }
+        #jumpscare-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 9000; display: none; }
+
+        .app-container { display: flex; height: 100vh; width: 100vw; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); }
+
+        /* SIDEBAR */
+        .sidebar { width: 280px; background: var(--side); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid rgba(0,0,0,0.3); overflow-y: auto; }
+        .sidebar h2 { margin: 0 0 10px 0; color: white; text-align: center; text-shadow: 0 0 10px var(--primary); }
+        .sidebar label { font-size: 0.8em; font-weight: bold; color: #aaa; text-transform: uppercase; margin-bottom: -10px; }
+        
+        /* Fix du bug des inputs géants */
+        .sidebar input[type="text"], .sidebar input[type="number"], .sidebar select { 
+            width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; 
+            background: var(--input); color: white; box-sizing: border-box; 
         }
-        .msg:hover { background: rgba(0,0,0,0.05); }
-        .msg .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
-        .msg .content-wrap { display: flex; flex-direction: column; }
-        .msg .meta { font-size: 0.8em; display: flex; gap: 10px; align-items: center; }
-        .msg .meta .uname { font-weight: bold; color: white; cursor: pointer; }
-        .msg .meta .time { color: #949ba4; font-size: 0.85em; }
-        .msg .text { line-height: 1.4; white-space: pre-wrap; }
-        .msg img { max-width: 400px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .sidebar input[type="color"] { width: 100%; height: 40px; border: none; border-radius: 5px; cursor: pointer; background: none; }
+        
+        .btn { padding: 12px; border-radius: 5px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
+        .btn:hover { filter: brightness(1.2); }
+        .btn:disabled { background: #555; cursor: not-allowed; }
+        .btn-danger { background: var(--danger); }
+
+        /* MAIN CHAT */
+        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .chat-header { padding: 15px 20px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(0,0,0,0.2); font-weight: bold; font-size: 1.2em; }
+        
+        #messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        /* Message Style */
+        .msg { display: flex; gap: 15px; animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border-left: 4px solid var(--primary); }
+        .msg:hover { background: rgba(255,255,255,0.1); }
+        .msg .content { display: flex; flex-direction: column; width: 100%; }
+        .msg .meta { margin-bottom: 5px; }
+        .msg .uname { font-weight: 900; font-size: 1.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .msg .time { font-size: 0.7em; color: #aaa; margin-left: 10px; }
+        .msg img { max-width: 300px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.2); }
 
         /* INPUT BAR */
-        .input-wrapper { padding: 0 20px 24px 20px; background: var(--bg); }
-        .input-box { 
-            background: var(--input); border-radius: 8px; padding: 10px 15px;
-            display: flex; align-items: center; gap: 15px;
-        }
-        input[type="text"] { flex: 1; background: none; border: none; color: var(--text); outline: none; font-size: 1em; }
-        .plus-btn { width: 24px; height: 24px; background: #b5bac1; color: var(--input); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold; }
-        .plus-btn:hover { background: white; }
+        .input-wrapper { padding: 20px; background: rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; }
+        .upload-btn { background: var(--input); padding: 12px; border-radius: 5px; cursor: pointer; color: white; border: 1px solid #555; font-weight: bold; }
+        .chat-input { flex: 1; padding: 15px; border-radius: 8px; border: none; background: var(--input); color: white; font-size: 1.1em; outline: none; }
+        .chat-input:focus { box-shadow: 0 0 10px var(--primary); }
 
-        /* JUMPSCARE & EXPLOSION */
-        #jumpscare-screen { position: fixed; top:0; left:0; width:100%; height:100%; background:black; z-index:10000; display:none; }
-        .shake { animation: shake-anim 0.1s infinite; }
-        @keyframes shake-anim { 0% { transform: translate(2px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -2px) rotate(-1deg); } 100% { transform: translate(1px, 2px) rotate(0deg); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
-
-        /* 67 PATTERN BACKGROUND */
-        .bg-67 { position: fixed; top:0; left:0; width:100%; height:100%; opacity: 0.03; pointer-events: none; font-size: 80px; font-weight: 900; line-height: 0.8; z-index: -1; }
+        /* Mode libre drag */
+        .draggable { position: absolute; cursor: move; }
     </style>
 </head>
 <body>
 
-<div id="explosion-overlay"></div>
+<div id="red-overlay"></div>
 <div id="jumpscare-screen"></div>
-<div class="bg-67" id="bg-pattern"></div>
 
 <div class="app-container">
-    <!-- SIDEBAR -->
+    <!-- BARRE LATÉRALE (TOUS LES BOUTONS SONT LÀ) -->
     <div class="sidebar">
         <h2>GOYGANG67</h2>
-        <div style="font-size: 0.8em; color: #949ba4; margin-bottom: 5px;">TON PSEUDO</div>
-        <input type="text" id="my-name" value="User67" style="background:#1e1f22; border-radius:4px; padding:5px; margin-bottom:15px;">
         
-        <div style="font-size: 0.8em; color: #949ba4; margin-bottom: 5px;">COULEUR PSEUDO</div>
-        <input type="color" id="my-color" value="#5865f2" style="width:100%; height:30px; border:none; cursor:pointer;">
+        <label>Ton Pseudo</label>
+        <input type="text" id="my-name" value="GoyUser">
+        
+        <label>Couleur Pseudo</label>
+        <input type="color" id="my-color" value="#00ffcc">
+        
+        <label>Taille Police (px)</label>
+        <input type="number" id="my-size" value="16">
 
-        <button onclick="changeStyle('shrek')" style="margin-top:20px; background:#4e5058;">STYLE SHREK (ALL)</button>
-        <button onclick="changeStyle('discord')" style="background:#4e5058;">STYLE DISCORD (ALL)</button>
-        <button onclick="clearAll()" style="background:var(--danger); margin-top: auto;">NETTOYER TOUT</button>
+        <hr style="border-color: #444; width: 100%; margin: 10px 0;">
+        
+        <label>MODIFIER POUR TOUT LE MONDE</label>
+        <button class="btn" onclick="changeGlobalBg()">Changer Fond d'écran</button>
+        
+        <select id="theme-selector" onchange="changeGlobalStyle(this.value)">
+            <option value="discord">Thème Défaut</option>
+            <option value="shrek">Thème Shrek</option>
+            <option value="hacker">Thème Hacker Dark</option>
+        </select>
+
+        <hr style="border-color: #444; width: 100%; margin: 10px 0;">
+
+        <button class="btn btn-danger" id="btn-jumpscare" onclick="triggerGlobalJumpscare()" disabled>⚠️ JUMPSCARE ALL (0/5)</button>
+        <button class="btn btn-danger" onclick="adminWipe()" style="background: #8b0000; margin-top: auto;">TOUT EFFACER</button>
     </div>
 
-    <!-- MAIN CHAT -->
+    <!-- ZONE DE CHAT -->
     <div class="chat-area">
-        <div id="chat-header"># general-67</div>
+        <div class="chat-header"># general-67</div>
+        
         <div id="messages-container"></div>
         
         <div class="input-wrapper">
-            <div class="input-box">
-                <label class="plus-btn" for="file-up" title="Upload fichier">+</label>
-                <input type="file" id="file-up" style="display:none" multiple onchange="uploadFiles()">
-                <input type="text" id="chat-input" placeholder="Envoyer un message dans #general-67 (Spam 67 pour l'explosion!)">
-            </div>
+            <label class="upload-btn" for="file-upload">📎 Fichiers</label>
+            <input type="file" id="file-upload" multiple style="display: none;" onchange="uploadFiles()">
+            
+            <input type="text" id="chat-input" class="chat-input" placeholder="Tapes ton message... (Spam 67 pour exploser)">
+            <button class="btn" onclick="sendText()" style="width: 100px;">Envoyer</button>
         </div>
     </div>
 </div>
 
 <script>
-    // INITIALISATION SUPABASE (Corrigé avec tes vraies clés)
+    // INITIALISATION SUPABASE (Avec TA CLÉ)
     const S_URL = 'https://cqxelnijwtjdnczpaggs.supabase.co';
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxeGVsbmlqd3RqZG5jenBhZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODY4NjIsImV4cCI6MjA5NDY2Mjg2Mn0.LPElYtLB8NGV70_Y4yWCu8xb6SUBz67_Z7DhypQjPEI';
     const sb = supabase.createClient(S_URL, S_KEY);
 
-    let spam67 = 0;
+    let myMessageCount = 0;
+    let redLevel = 0;
     let lastJumpscareId = null;
+    let lastMessageCount = 0; // Pour éviter les clignotements au rechargement
 
-    // Background pattern "67"
-    document.getElementById('bg-pattern').innerText = "67 ".repeat(500);
-
-    // --- LOGIQUE 67 & EXPLOSION ---
-    document.getElementById('chat-input').addEventListener('keydown', async (e) => {
-        if(e.key === 'Enter') {
-            const val = e.target.value;
-            if(val.includes('67')) {
-                spam67 += 0.15;
-                document.documentElement.style.setProperty('--67-red', spam67);
-                document.body.classList.add('shake');
-                setTimeout(() => document.body.classList.remove('shake'), 200);
-
-                if(spam67 >= 1) {
-                    await triggerGlobalJumpscare();
-                    spam67 = 0;
-                    document.documentElement.style.setProperty('--67-red', 0);
-                }
+    // --- SYSTÈME 67 (BACKFLIP ET EXPLOSION) ---
+    const inputField = document.getElementById('chat-input');
+    
+    inputField.addEventListener('input', (e) => {
+        const val = e.target.value;
+        if(val.includes('67')) {
+            // BACKFLIP SI C'EST EXACTEMENT 67
+            if(val.trim() === '67') {
+                document.body.classList.add('backflip');
+                setTimeout(() => document.body.classList.remove('backflip'), 1000);
             }
-            sendMsg(val);
-            e.target.value = '';
+
+            // AUGMENTER LE ROUGE ET TREMBLER
+            redLevel += 0.15;
+            document.documentElement.style.setProperty('--red-level', redLevel);
+            document.body.classList.add('shaking');
+            setTimeout(() => document.body.classList.remove('shaking'), 150);
+
+            // EXPLOSION (JUMPSCARE)
+            if(redLevel >= 1) {
+                redLevel = 0; document.documentElement.style.setProperty('--red-level', 0);
+                triggerGlobalJumpscare();
+                e.target.value = '';
+            }
+        } else {
+            redLevel = 0; document.documentElement.style.setProperty('--red-level', 0);
         }
     });
 
-    async function sendMsg(txt) {
-        if(!txt) return;
-        const name = document.getElementById('my-name').value;
-        const col = document.getElementById('my-color').value;
-        await sb.from('messages').insert([{ username: name, content: txt, color: col, type: 'text' }]);
-        fetch();
+    inputField.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') sendText();
+    });
+
+    // --- ENVOI DE MESSAGES ---
+    async function sendText() {
+        const val = inputField.value.trim();
+        if(!val) return;
+        
+        const name = document.getElementById('my-name').value || 'Anonyme';
+        const color = document.getElementById('my-color').value;
+        const size = document.getElementById('my-size').value + 'px';
+
+        await sb.from('messages').insert([{ username: name, content: val, color: color, size: size, type: 'text' }]);
+        inputField.value = '';
+        
+        // Système pour débloquer le bouton Jumpscare
+        myMessageCount++;
+        const jumpBtn = document.getElementById('btn-jumpscare');
+        if(myMessageCount >= 5) {
+            jumpBtn.disabled = false;
+            jumpBtn.innerText = "⚠️ JUMPSCARE ALL (PRÊT)";
+        } else {
+            jumpBtn.innerText = `⚠️ JUMPSCARE ALL (${myMessageCount}/5)`;
+        }
+        
+        fetchData();
     }
 
+    // --- UPLOAD DE FICHIERS ---
     async function uploadFiles() {
-        const files = document.getElementById('file-up').files;
-        const name = document.getElementById('my-name').value;
-        const col = document.getElementById('my-color').value;
+        const files = document.getElementById('file-upload').files;
+        if(files.length === 0) return;
+        
+        const name = document.getElementById('my-name').value || 'Anonyme';
+        const color = document.getElementById('my-color').value;
+        const size = document.getElementById('my-size').value + 'px';
 
         for(let f of files) {
-            const path = `f_${Date.now()}_${f.name}`;
+            const path = `${Date.now()}_${f.name}`;
             const { data, error } = await sb.storage.from('fichiers').upload(path, f);
             if(data) {
                 const url = `${S_URL}/storage/v1/object/public/fichiers/${path}`;
-                await sb.from('messages').insert([{ username: name, content: url, color: col, type: 'text' }]);
+                await sb.from('messages').insert([{ username: name, content: url, color: color, size: size, type: 'text' }]);
+            } else {
+                alert("Erreur d'upload. As-tu bien mis le dossier 'fichiers' en Public dans Supabase ?");
             }
         }
-        fetch();
+        document.getElementById('file-upload').value = '';
+        fetchData();
     }
 
-    async function fetch() {
+    // --- FONCTIONS GLOBALES (POUR TOUT LE MONDE) ---
+    async function changeGlobalBg() {
+        const url = prompt("Colle le lien d'une image pour changer le fond de TOUT LE MONDE :");
+        if(url) await sb.from('messages').insert([{ type: 'wallpaper', content: url }]);
+    }
+
+    async function changeGlobalStyle(styleName) {
+        await sb.from('messages').insert([{ type: 'style', content: styleName }]);
+    }
+
+    async function triggerGlobalJumpscare() {
+        await sb.from('messages').insert([{ type: 'jumpscare', content: 'BOOM' }]);
+        myMessageCount = 0;
+        document.getElementById('btn-jumpscare').disabled = true;
+        document.getElementById('btn-jumpscare').innerText = "⚠️ JUMPSCARE ALL (0/5)";
+    }
+
+    // Fonction qui lance l'effet Jumpscare à l'écran
+    function doJumpscare() {
+        const scr = document.getElementById('jumpscare-screen');
+        const images = [
+            'https://media.tenor.com/r9GmMxwqtwgAAAAe/jeff-the-killer-that-face.png',
+            'https://www.shutterstock.com/image-vector/bold-yellow-numbers-67-white-600w-2697852337.jpg',
+            'https://i.ytimg.com/vi/1m1LVq0ktQE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBvIKt8OlTEldpCRVnN8jSkajSXMw'
+        ];
+        
+        scr.style.display = 'block';
+        let count = 0;
+        const flashInt = setInterval(() => {
+            scr.innerHTML = `<img src="${images[count % 3]}" style="width:100%; height:100%; object-fit:cover;">`;
+            scr.style.filter = count % 2 === 0 ? "invert(1)" : "invert(0)";
+            count++;
+            if(count > 25) { // Dure ~2.5 secondes
+                clearInterval(flashInt);
+                scr.style.display = 'none';
+            }
+        }, 100);
+    }
+
+    async function adminWipe() {
+        if(confirm("T'ES SÛR DE VOULOIR TOUT SUPPRIMER DÉFINITIVEMENT ?")) {
+            await sb.from('messages').delete().neq('id', 0);
+            location.reload();
+        }
+    }
+
+    // --- RÉCUPÉRATION ET AFFICHAGE ---
+    async function fetchData() {
         const { data } = await sb.from('messages').select('*').order('created_at', { ascending: true });
         if(!data) return;
 
+        // On ne met à jour le HTML des messages que s'il y a un nouveau message
+        let needsRender = (data.length !== lastMessageCount);
+        lastMessageCount = data.length;
+
         const container = document.getElementById('messages-container');
-        container.innerHTML = '';
+        if(needsRender) container.innerHTML = '';
+
+        let activeBg = '';
+        let activeStyle = 'discord';
 
         data.forEach(m => {
-            // Synchro des Styles Globaux
-            if(m.type === 'style') applyStyle(m.content);
+            // Lecture des commandes Globales
+            if(m.type === 'wallpaper') activeBg = m.content;
+            if(m.type === 'style') activeStyle = m.content;
             if(m.type === 'jumpscare' && m.id !== lastJumpscareId) {
                 doJumpscare();
                 lastJumpscareId = m.id;
             }
 
-            if(m.type === 'text') {
-                const isImg = m.content.includes('supabase.co/storage');
+            // Rendu des messages
+            if(m.type === 'text' && needsRender) {
+                const isImage = m.content.includes('supabase.co/storage') || m.content.match(/\.(jpeg|jpg|gif|png)$/i);
+                const safeName = m.username || 'Anonyme';
+                
                 container.innerHTML += `
-                    <div class="msg">
-                        <div class="avatar">${m.username[0].toUpperCase()}</div>
-                        <div class="content-wrap">
+                    <div class="msg" style="border-left-color: ${m.color}">
+                        <div class="content">
                             <div class="meta">
-                                <span class="uname" style="color:${m.color}">${m.username}</span>
+                                <span class="uname" style="color: ${m.color}">${safeName}</span>
                                 <span class="time">${new Date(m.created_at).toLocaleTimeString()}</span>
                             </div>
-                            <div class="text">
-                                ${isImg ? `<img src="${m.content}">` : m.content}
+                            <div class="text" style="font-size: ${m.size || '16px'};">
+                                ${isImage ? `<img src="${m.content}" loading="lazy">` : m.content}
                             </div>
                         </div>
                     </div>
                 `;
             }
         });
-        container.scrollTop = container.scrollHeight;
-    }
 
-    // --- FONCTIONS SOCIALES ---
-    async function changeStyle(s) {
-        await sb.from('messages').insert([{ username: 'SYSTEM', type: 'style', content: s }]);
-    }
-
-    function applyStyle(s) {
-        if(s === 'shrek') {
-            document.documentElement.style.setProperty('--bg', '#5d4037');
-            document.documentElement.style.setProperty('--side', '#8bc34a');
-            document.body.style.backgroundImage = "url('https://wallpapers.com/images/hd/shrek-background-1920-x-1080-60m310h0n76f571j.jpg')";
-            document.body.style.backgroundSize = "cover";
+        // Appliquer le fond
+        if(activeBg) {
+            document.body.style.backgroundImage = `url('${activeBg}')`;
         } else {
-            document.documentElement.style.setProperty('--bg', '#313338');
-            document.documentElement.style.setProperty('--side', '#2b2d31');
-            document.body.style.backgroundImage = "none";
+            document.body.style.backgroundImage = 'none';
+        }
+
+        // Appliquer le style global
+        document.body.className = '';
+        if(activeStyle !== 'discord') {
+            document.body.classList.add(`theme-${activeStyle}`);
+        }
+
+        // Auto-scroll vers le bas uniquement si on a re-rendu
+        if(needsRender) {
+            container.scrollTop = container.scrollHeight;
         }
     }
 
-    async function triggerGlobalJumpscare() {
-        await sb.from('messages').insert([{ username: 'SYSTEM', type: 'jumpscare', content: 'BOOM' }]);
-    }
-
-    function doJumpscare() {
-        const scr = document.getElementById('jumpscare-screen');
-        scr.style.display = 'block';
-        scr.innerHTML = `<img src="https://media.tenor.com/r9GmMxwqtwgAAAAe/jeff-the-killer-that-face.png" style="width:100%;height:100%;object-fit:cover;">`;
-        setTimeout(() => { scr.style.display = 'none'; }, 2000);
-    }
-
-    async function clearAll() {
-        if(confirm("WIPE DATABASE?")) {
-            await sb.from('messages').delete().neq('id', 0);
-            location.reload();
-        }
-    }
-
-    setInterval(fetch, 3000);
-    fetch();
+    // Lancer la boucle
+    setInterval(fetchData, 2000);
+    fetchData();
 </script>
 
 </body>
