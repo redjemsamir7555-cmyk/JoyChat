@@ -4,7 +4,7 @@
 Ce projet est une application de messagerie instantanée permettant de communiquer en temps réel et de partager des fichiers ou des images.
 
 ## Lien du projet
-Lien direct : https://redjemsamir7555-cmyk.github.io/JoyGang67/
+Lien direct : https://redjemsamir7555-cmyk.github.io/JoyChat
 
 ## Fonctionnalités
 - Envoi et réception de messages en temps réel.
