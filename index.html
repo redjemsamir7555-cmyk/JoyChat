@@ -3,336 +3,181 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GOYGANG67 // THE ULTIMATE OS</title>
+    <title>Chat Privé</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg: #313338; --side: #2b2d31; --input: #383a40; --text: #dbdee1;
-            --primary: #5865f2; --danger: #ed4245; --red-level: 0;
+            --bg: #313338;
+            --side: #2b2d31;
+            --input: #383a40;
+            --text: #dbdee1;
+            --primary: #5865f2;
         }
-
-        /* Thèmes Globaux */
-        .theme-shrek { --bg: #5d4037; --side: #8bc34a; --input: #3e2723; }
-        .theme-hacker { --bg: #0a0a0a; --side: #000000; --input: #111; --text: #00ff41; --primary: #00ff41; }
 
         body, html { 
             margin: 0; padding: 0; width: 100vw; height: 100vh; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg); color: var(--text); overflow: hidden;
-            background-size: cover; background-position: center; transition: background 0.5s;
         }
 
-        /* Animations */
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes flip { 0% { transform: perspective(1000px) rotateX(0deg); } 100% { transform: perspective(1000px) rotateX(360deg); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-1deg); } 75% { transform: translateX(5px) rotate(1deg); } }
-        
-        .backflip { animation: flip 1s ease-in-out; }
-        .shaking { animation: shake 0.1s infinite; }
-
-        /* Overlays */
-        #red-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: var(--red-level); pointer-events: none; z-index: 8000; transition: opacity 0.1s; }
-        #jumpscare-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 9000; display: none; }
-
-        .app-container { display: flex; height: 100vh; width: 100vw; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); }
+        .app-container { display: flex; height: 100vh; width: 100vw; }
 
         /* SIDEBAR */
-        .sidebar { width: 280px; background: var(--side); padding: 20px; display: flex; flex-direction: column; gap: 15px; border-right: 1px solid rgba(0,0,0,0.3); overflow-y: auto; }
-        .sidebar h2 { margin: 0 0 10px 0; color: white; text-align: center; text-shadow: 0 0 10px var(--primary); }
-        .sidebar label { font-size: 0.8em; font-weight: bold; color: #aaa; text-transform: uppercase; margin-bottom: -10px; }
+        .sidebar { 
+            width: 260px; background: var(--side); padding: 20px; 
+            display: flex; flex-direction: column; gap: 15px; 
+            border-right: 1px solid rgba(0,0,0,0.2); 
+        }
+        .sidebar h2 { margin: 0 0 10px 0; font-size: 1.2em; color: white; }
+        .sidebar label { font-size: 0.8em; font-weight: bold; color: #aaa; text-transform: uppercase; }
         
-        /* Fix du bug des inputs géants */
-        .sidebar input[type="text"], .sidebar input[type="number"], .sidebar select { 
+        .sidebar input { 
             width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #444; 
             background: var(--input); color: white; box-sizing: border-box; 
         }
-        .sidebar input[type="color"] { width: 100%; height: 40px; border: none; border-radius: 5px; cursor: pointer; background: none; }
-        
-        .btn { padding: 12px; border-radius: 5px; border: none; background: var(--primary); color: white; font-weight: bold; cursor: pointer; transition: 0.2s; width: 100%; }
-        .btn:hover { filter: brightness(1.2); }
-        .btn:disabled { background: #555; cursor: not-allowed; }
-        .btn-danger { background: var(--danger); }
 
-        /* MAIN CHAT */
-        .chat-area { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .chat-header { padding: 15px 20px; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(0,0,0,0.2); font-weight: bold; font-size: 1.2em; }
+        .btn { 
+            padding: 10px; border-radius: 5px; border: none; 
+            background: var(--primary); color: white; font-weight: bold; 
+            cursor: pointer; transition: 0.2s; 
+        }
+        .btn:hover { filter: brightness(1.2); }
+        .btn-danger { background: #ed4245; margin-top: auto; }
+
+        /* CHAT AREA */
+        .chat-area { flex: 1; display: flex; flex-direction: column; }
+        .chat-header { padding: 15px 20px; background: rgba(0,0,0,0.1); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; }
         
-        #messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        #messages-container { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         
-        /* Message Style */
-        .msg { display: flex; gap: 15px; animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border-left: 4px solid var(--primary); }
-        .msg:hover { background: rgba(255,255,255,0.1); }
-        .msg .content { display: flex; flex-direction: column; width: 100%; }
-        .msg .meta { margin-bottom: 5px; }
-        .msg .uname { font-weight: 900; font-size: 1.1em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-        .msg .time { font-size: 0.7em; color: #aaa; margin-left: 10px; }
-        .msg img { max-width: 300px; border-radius: 8px; margin-top: 10px; border: 1px solid rgba(255,255,255,0.2); }
+        /* Messages */
+        .msg { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .msg .uname { font-weight: bold; margin-right: 8px; }
+        .msg .time { font-size: 0.7em; color: #888; }
+        .msg .text { margin-top: 5px; word-break: break-word; }
+        .msg img { max-width: 100%; max-height: 300px; border-radius: 5px; margin-top: 10px; display: block; }
 
         /* INPUT BAR */
-        .input-wrapper { padding: 20px; background: rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; }
-        .upload-btn { background: var(--input); padding: 12px; border-radius: 5px; cursor: pointer; color: white; border: 1px solid #555; font-weight: bold; }
-        .chat-input { flex: 1; padding: 15px; border-radius: 8px; border: none; background: var(--input); color: white; font-size: 1.1em; outline: none; }
-        .chat-input:focus { box-shadow: 0 0 10px var(--primary); }
-
-        /* Mode libre drag */
-        .draggable { position: absolute; cursor: move; }
+        .input-wrapper { padding: 20px; background: var(--bg); display: flex; gap: 10px; align-items: center; }
+        .chat-input { flex: 1; padding: 12px; border-radius: 5px; border: none; background: var(--input); color: white; outline: none; }
+        .upload-btn { background: #4e5058; padding: 10px; border-radius: 5px; cursor: pointer; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
-<div id="red-overlay"></div>
-<div id="jumpscare-screen"></div>
-
 <div class="app-container">
-    <!-- BARRE LATÉRALE (TOUS LES BOUTONS SONT LÀ) -->
     <div class="sidebar">
-        <h2>GOYGANG67</h2>
+        <h2>Paramètres</h2>
         
-        <label>Ton Pseudo</label>
-        <input type="text" id="my-name" value="GoyUser">
+        <label>Pseudo</label>
+        <input type="text" id="my-name" value="Utilisateur">
         
-        <label>Couleur Pseudo</label>
-        <input type="color" id="my-color" value="#00ffcc">
-        
-        <label>Taille Police (px)</label>
-        <input type="number" id="my-size" value="16">
+        <label>Couleur du nom</label>
+        <input type="color" id="my-color" value="#5865f2">
 
-        <hr style="border-color: #444; width: 100%; margin: 10px 0;">
-        
-        <label>MODIFIER POUR TOUT LE MONDE</label>
-        <button class="btn" onclick="changeGlobalBg()">Changer Fond d'écran</button>
-        
-        <select id="theme-selector" onchange="changeGlobalStyle(this.value)">
-            <option value="discord">Thème Défaut</option>
-            <option value="shrek">Thème Shrek</option>
-            <option value="hacker">Thème Hacker Dark</option>
-        </select>
-
-        <hr style="border-color: #444; width: 100%; margin: 10px 0;">
-
-        <button class="btn btn-danger" id="btn-jumpscare" onclick="triggerGlobalJumpscare()" disabled>⚠️ JUMPSCARE ALL (0/5)</button>
-        <button class="btn btn-danger" onclick="adminWipe()" style="background: #8b0000; margin-top: auto;">TOUT EFFACER</button>
+        <button class="btn btn-danger" onclick="adminWipe()">Vider l'historique</button>
     </div>
 
-    <!-- ZONE DE CHAT -->
     <div class="chat-area">
-        <div class="chat-header"># general-67</div>
-        
+        <div class="chat-header">Discussion Générale</div>
         <div id="messages-container"></div>
         
         <div class="input-wrapper">
-            <label class="upload-btn" for="file-upload">📎 Fichiers</label>
-            <input type="file" id="file-upload" multiple style="display: none;" onchange="uploadFiles()">
+            <label class="upload-btn" for="file-upload">📎 Fichier</label>
+            <input type="file" id="file-upload" style="display: none;" onchange="uploadFiles()">
             
-            <input type="text" id="chat-input" class="chat-input" placeholder="Tapes ton message... (Spam 67 pour exploser)">
-            <button class="btn" onclick="sendText()" style="width: 100px;">Envoyer</button>
+            <input type="text" id="chat-input" class="chat-input" placeholder="Écrire un message...">
+            <button class="btn" onclick="sendText()">Envoyer</button>
         </div>
     </div>
 </div>
 
 <script>
-    // INITIALISATION SUPABASE (Avec TA CLÉ)
+    // CONFIGURATION SUPABASE
     const S_URL = 'https://cqxelnijwtjdnczpaggs.supabase.co';
     const S_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNxeGVsbmlqd3RqZG5jenBhZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwODY4NjIsImV4cCI6MjA5NDY2Mjg2Mn0.LPElYtLB8NGV70_Y4yWCu8xb6SUBz67_Z7DhypQjPEI';
     const sb = supabase.createClient(S_URL, S_KEY);
 
-    let myMessageCount = 0;
-    let redLevel = 0;
-    let lastJumpscareId = null;
-    let lastMessageCount = 0; // Pour éviter les clignotements au rechargement
-
-    // --- SYSTÈME 67 (BACKFLIP ET EXPLOSION) ---
     const inputField = document.getElementById('chat-input');
-    
-    inputField.addEventListener('input', (e) => {
-        const val = e.target.value;
-        if(val.includes('67')) {
-            // BACKFLIP SI C'EST EXACTEMENT 67
-            if(val.trim() === '67') {
-                document.body.classList.add('backflip');
-                setTimeout(() => document.body.classList.remove('backflip'), 1000);
-            }
+    let lastMessageCount = 0;
 
-            // AUGMENTER LE ROUGE ET TREMBLER
-            redLevel += 0.15;
-            document.documentElement.style.setProperty('--red-level', redLevel);
-            document.body.classList.add('shaking');
-            setTimeout(() => document.body.classList.remove('shaking'), 150);
-
-            // EXPLOSION (JUMPSCARE)
-            if(redLevel >= 1) {
-                redLevel = 0; document.documentElement.style.setProperty('--red-level', 0);
-                triggerGlobalJumpscare();
-                e.target.value = '';
-            }
-        } else {
-            redLevel = 0; document.documentElement.style.setProperty('--red-level', 0);
-        }
-    });
-
-    inputField.addEventListener('keydown', (e) => {
-        if(e.key === 'Enter') sendText();
-    });
-
-    // --- ENVOI DE MESSAGES ---
+    // ENVOYER TEXTE
     async function sendText() {
         const val = inputField.value.trim();
         if(!val) return;
         
         const name = document.getElementById('my-name').value || 'Anonyme';
         const color = document.getElementById('my-color').value;
-        const size = document.getElementById('my-size').value + 'px';
 
-        await sb.from('messages').insert([{ username: name, content: val, color: color, size: size, type: 'text' }]);
+        await sb.from('messages').insert([{ 
+            username: name, 
+            content: val, 
+            color: color, 
+            type: 'text' 
+        }]);
+        
         inputField.value = '';
-        
-        // Système pour débloquer le bouton Jumpscare
-        myMessageCount++;
-        const jumpBtn = document.getElementById('btn-jumpscare');
-        if(myMessageCount >= 5) {
-            jumpBtn.disabled = false;
-            jumpBtn.innerText = "⚠️ JUMPSCARE ALL (PRÊT)";
-        } else {
-            jumpBtn.innerText = `⚠️ JUMPSCARE ALL (${myMessageCount}/5)`;
-        }
-        
         fetchData();
     }
 
-    // --- UPLOAD DE FICHIERS ---
+    // ENVOYER FICHIER
     async function uploadFiles() {
-        const files = document.getElementById('file-upload').files;
-        if(files.length === 0) return;
+        const file = document.getElementById('file-upload').files[0];
+        if(!file) return;
         
         const name = document.getElementById('my-name').value || 'Anonyme';
         const color = document.getElementById('my-color').value;
-        const size = document.getElementById('my-size').value + 'px';
 
-        for(let f of files) {
-            const path = `${Date.now()}_${f.name}`;
-            const { data, error } = await sb.storage.from('fichiers').upload(path, f);
-            if(data) {
-                const url = `${S_URL}/storage/v1/object/public/fichiers/${path}`;
-                await sb.from('messages').insert([{ username: name, content: url, color: color, size: size, type: 'text' }]);
-            } else {
-                alert("Erreur d'upload. As-tu bien mis le dossier 'fichiers' en Public dans Supabase ?");
-            }
+        const path = `${Date.now()}_${file.name}`;
+        const { data, error } = await sb.storage.from('fichiers').upload(path, file);
+
+        if(data) {
+            const url = `${S_URL}/storage/v1/object/public/fichiers/${path}`;
+            await sb.from('messages').insert([{ username: name, content: url, color: color, type: 'text' }]);
         }
-        document.getElementById('file-upload').value = '';
         fetchData();
     }
 
-    // --- FONCTIONS GLOBALES (POUR TOUT LE MONDE) ---
-    async function changeGlobalBg() {
-        const url = prompt("Colle le lien d'une image pour changer le fond de TOUT LE MONDE :");
-        if(url) await sb.from('messages').insert([{ type: 'wallpaper', content: url }]);
-    }
-
-    async function changeGlobalStyle(styleName) {
-        await sb.from('messages').insert([{ type: 'style', content: styleName }]);
-    }
-
-    async function triggerGlobalJumpscare() {
-        await sb.from('messages').insert([{ type: 'jumpscare', content: 'BOOM' }]);
-        myMessageCount = 0;
-        document.getElementById('btn-jumpscare').disabled = true;
-        document.getElementById('btn-jumpscare').innerText = "⚠️ JUMPSCARE ALL (0/5)";
-    }
-
-    // Fonction qui lance l'effet Jumpscare à l'écran
-    function doJumpscare() {
-        const scr = document.getElementById('jumpscare-screen');
-        const images = [
-            'https://media.tenor.com/r9GmMxwqtwgAAAAe/jeff-the-killer-that-face.png',
-            'https://www.shutterstock.com/image-vector/bold-yellow-numbers-67-white-600w-2697852337.jpg',
-            'https://i.ytimg.com/vi/1m1LVq0ktQE/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBvIKt8OlTEldpCRVnN8jSkajSXMw'
-        ];
-        
-        scr.style.display = 'block';
-        let count = 0;
-        const flashInt = setInterval(() => {
-            scr.innerHTML = `<img src="${images[count % 3]}" style="width:100%; height:100%; object-fit:cover;">`;
-            scr.style.filter = count % 2 === 0 ? "invert(1)" : "invert(0)";
-            count++;
-            if(count > 25) { // Dure ~2.5 secondes
-                clearInterval(flashInt);
-                scr.style.display = 'none';
-            }
-        }, 100);
-    }
-
-    async function adminWipe() {
-        if(confirm("T'ES SÛR DE VOULOIR TOUT SUPPRIMER DÉFINITIVEMENT ?")) {
-            await sb.from('messages').delete().neq('id', 0);
-            location.reload();
-        }
-    }
-
-    // --- RÉCUPÉRATION ET AFFICHAGE ---
+    // RÉCUPÉRER MESSAGES
     async function fetchData() {
         const { data } = await sb.from('messages').select('*').order('created_at', { ascending: true });
         if(!data) return;
 
-        // On ne met à jour le HTML des messages que s'il y a un nouveau message
-        let needsRender = (data.length !== lastMessageCount);
-        lastMessageCount = data.length;
+        if(data.length !== lastMessageCount) {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
 
-        const container = document.getElementById('messages-container');
-        if(needsRender) container.innerHTML = '';
-
-        let activeBg = '';
-        let activeStyle = 'discord';
-
-        data.forEach(m => {
-            // Lecture des commandes Globales
-            if(m.type === 'wallpaper') activeBg = m.content;
-            if(m.type === 'style') activeStyle = m.content;
-            if(m.type === 'jumpscare' && m.id !== lastJumpscareId) {
-                doJumpscare();
-                lastJumpscareId = m.id;
-            }
-
-            // Rendu des messages
-            if(m.type === 'text' && needsRender) {
-                const isImage = m.content.includes('supabase.co/storage') || m.content.match(/\.(jpeg|jpg|gif|png)$/i);
-                const safeName = m.username || 'Anonyme';
-                
-                container.innerHTML += `
-                    <div class="msg" style="border-left-color: ${m.color}">
-                        <div class="content">
-                            <div class="meta">
-                                <span class="uname" style="color: ${m.color}">${safeName}</span>
-                                <span class="time">${new Date(m.created_at).toLocaleTimeString()}</span>
-                            </div>
-                            <div class="text" style="font-size: ${m.size || '16px'};">
-                                ${isImage ? `<img src="${m.content}" loading="lazy">` : m.content}
+            data.forEach(m => {
+                if(m.type === 'text') {
+                    const isImage = m.content.match(/\.(jpeg|jpg|gif|png|webp)$/i) || m.content.includes('supabase.co/storage');
+                    
+                    container.innerHTML += `
+                        <div class="msg" style="border-left-color: ${m.color}">
+                            <span class="uname" style="color: ${m.color}">${m.username}</span>
+                            <span class="time">${new Date(m.created_at).toLocaleTimeString()}</span>
+                            <div class="text">
+                                ${isImage ? `<img src="${m.content}">` : m.content}
                             </div>
                         </div>
-                    </div>
-                `;
-            }
-        });
-
-        // Appliquer le fond
-        if(activeBg) {
-            document.body.style.backgroundImage = `url('${activeBg}')`;
-        } else {
-            document.body.style.backgroundImage = 'none';
-        }
-
-        // Appliquer le style global
-        document.body.className = '';
-        if(activeStyle !== 'discord') {
-            document.body.classList.add(`theme-${activeStyle}`);
-        }
-
-        // Auto-scroll vers le bas uniquement si on a re-rendu
-        if(needsRender) {
+                    `;
+                }
+            });
+            lastMessageCount = data.length;
             container.scrollTop = container.scrollHeight;
         }
     }
 
-    // Lancer la boucle
+    async function adminWipe() {
+        if(confirm("Supprimer tous les messages ?")) {
+            await sb.from('messages').delete().neq('id', 0);
+            fetchData();
+        }
+    }
+
+    // Touche Entrée pour envoyer
+    inputField.addEventListener('keydown', (e) => { if(e.key === 'Enter') sendText(); });
+
+    // Rafraîchissement automatique
     setInterval(fetchData, 2000);
     fetchData();
 </script>
